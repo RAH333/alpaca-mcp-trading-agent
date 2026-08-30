@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "alpaca-trading-server": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp-server-alpaca",
+        "mcp-server-alpaca"
+      ],
+      "env": {
+        "ALPACA_API_KEY": "your_key_here",
+        "ALPACA_SECRET_KEY": "your_secret_key_here",
+        "ALPACA_USE_PAPER": "true"
+      }
+    }
+  }
+}
+
+"""
+Integration Framework Configuration
+The core requirement of this hackathon is utilizing the MCP Server.
+This configuration tells an open AI interface or IDE environment (like Cursor AI)
+how to safely invoke your local trading modules:
+"""
