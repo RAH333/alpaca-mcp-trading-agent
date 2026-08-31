@@ -71,3 +71,43 @@ alpaca-mcp-trading-agent/
 ├── requirements.txt               # Legacy package definitions
 └── README.md                      # The centerpiece submission document for judges
 ```
+
+
+# AgenticAlpha: Multi-Leg Option Spread Trading Agent
+
+Developed live for the official **[Alpaca AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/alpaca-ai-trading-agents-hackathon)** on lablab.ai.
+
+## System Architecture Overview
+AgenticAlpha solves the problem of automated derivative risk management by wrapping specialized LLM-driven research agents inside strict mathematical programmatic guardrails.
+
+1. **Research Agent (src/agents/research_agent.py):** Queries Implied Volatility (IV) ranks over market indices via the Model Context Protocol (MCP) server. Formulates automated complex spreads (e.g., Credit Spreads).
+2. **Execution Guardrail Agent (src/agents/execution_agent.py):** Intercepts raw actions and runs a deterministic risk analysis to ensure positions never violate capital protection parameters.
+3. **Alpaca API Execution Core:** Dispatches programmatic options executions natively through the Alpaca Python SDK.
+
+## Installation & Setup
+
+1. **Clone the Repo Workspace:**
+   ```bash
+   git clone https://github.com
+   cd alpaca-mcp-options-agent
+   ```
+
+2. **Establish Environment Properties:**
+   Create a `.env` file from the repository template:
+   ```bash
+   cp .env.example .env
+   ```
+   Add your paper-trading developer parameters inside `.env`.
+
+3. **Install Core Platform Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Boot Up the Autonomous Loop Runtime:**
+   ```bash
+   python -m src.server
+   ```
+
+## Open Community Team
+Our codebase is open to all hackathon members. Please request access, review outstanding GitHub Issues, map new strategy criteria into the research module, and issue clean Pull Requests!
