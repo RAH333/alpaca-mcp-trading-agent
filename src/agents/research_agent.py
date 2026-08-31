@@ -14,7 +14,7 @@ class OptionsSpreadResearcher:
         Simulates an LLM agent scanning an Alpaca MCP market data tool context 
         to find mathematically advantageous option spreads.
         """
-        print(f"[🔬 Research Agent] Fetching real-time Implied Volatility (IV) for {ticker} via MCP Server...")
+        print(f"[Research Agent] Fetching real-time Implied Volatility (IV) for {ticker} via MCP Server...")
         await asyncio.sleep(1.5)  # Simulating network lookups
         
         # Scenario logic imitating real options telemetry data extraction
