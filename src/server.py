@@ -1,50 +1,34 @@
-"""
-# Main Entry Point
-This script instantiates the workspace, orchestrating the connection between the LLM backbone and
-the Alpaca Trading Infrastructure via the Model Context Protocol.
-"""
-
-import os
 import asyncio
-from dotenv import load_dotenv
-from alpaca.trading.client import TradingClient
-from src.agents.research_agent import MarketResearcher
-from src.agents.execution_agent import TradeExecutor
+from config.settings import TradingConfig
+from src.agents.research_agent import OptionsSpreadResearcher
+from src.agents.execution_agent import OptionsExecutionAgent
 
-# Load secrets securely
-load_dotenv()
-
-class AlpacaAIPlatform:
+class AutonomousTradingRuntime:
+    """
+    Orchestration center driving the autonomous loop logic for the 
+    LabLab.ai Alpaca AI Hackathon.
+    """
     def __init__(self):
-        self.api_key = os.getenv("ALPACA_API_KEY")
-        self.secret_key = os.getenv("ALPACA_SECRET_KEY")
-        self.is_paper = os.getenv("ALPACA_IS_PAPER", "true").lower() == "true"
-        
-        if not self.api_key or not self.secret_key:
-            raise ValueError("Missing critical Alpaca API Credentials inside .env file.")
-            
-        # Instantiate physical Alpaca Python SDK Client
-        self.trading_client = TradingClient(self.api_key, self.secret_key, paper=self.is_paper)
-        
-        # Instantiate Multi-Agent Pipeline
-        self.researcher = MarketResearcher()
-        self.executor = TradeExecutor(self.trading_client)
+        TradingConfig.validate()
+        self.researcher = OptionsSpreadResearcher()
+        self.executor = OptionsExecutionAgent(max_allowed_risk=TradingConfig.MAX_RISK)
 
-    async def run_autonomous_cycle(self, target_ticker: str):
-        print(f"[🤖 Agent Matrix] Initiating loop for symbol: {target_ticker}")
+    async def system_heartbeat_loop(self, watch_ticker: str):
+        print("====================================================================")
+        print("🤖 DELTAGUARD AUTONOMOUS ENGINE INITIALIZED | POWERED BY ALPACA MCP")
+        print("====================================================================\n")
         
-        # Step 1: Query LLM for news extraction or raw sentiment analysis
-        signal = await self.researcher.analyze_market(target_ticker)
-        print(f"[🔬 Research Agent] Signal generated: {signal}")
+        # Step 1: Initialize Research phase over the target ticker options chains
+        proposed_spread = await self.researcher.analyze_options_chain(watch_ticker)
         
-        # Step 2: Route actions down to execution via Alpaca wrappers
-        if signal in ["BUY", "SELL"]:
-            order_receipt = await self.executor.execute_signal(target_ticker, signal)
-            print(f"[⚡ Execution Agent] Execution Confirmed: {order_receipt}")
-        else:
-            print("[💤 System Status] Holding positions. No market entry parameters met.")
+        # Step 2: Pass output to Execution and Risk Control Layer
+        print(f"\n[🤖 Router] Routing determined {proposed_spread['strategy']} to Risk Engine...")
+        execution_receipt = await self.executor.execute_multi_leg_spread(proposed_spread)
+        
+        print(f"\n[🏁 Cycle Completed] System Loop Status: {execution_receipt['status']}")
+        print("====================================================================")
 
 if __name__ == "__main__":
-    platform = AlpacaAIPlatform()
-    # Simulate a run on Apple stock
-    asyncio.run(platform.run_autonomous_cycle("AAPL"))
+    runtime = AutonomousTradingRuntime()
+    # Execute loop tracking a typical high liquidity equity target
+    asyncio.run(runtime.system_heartbeat_loop("AAPL"))
