@@ -50,4 +50,3 @@ class OptionsSpreadResearcher:
                 "net_debit": 2.10,
                 "max_risk": 2.10
             }
-            
