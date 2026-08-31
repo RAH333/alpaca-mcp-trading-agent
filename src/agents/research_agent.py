@@ -21,7 +21,7 @@ class OptionsSpreadResearcher:
         simulated_iv_rank = random.randint(30, 85)
         spot_price = 150.00
         
-        print(f"[🔬 Research Agent] Ticker: {ticker} | Spot: ${spot_price} | IV Rank: {simulated_iv_rank}%")
+        print(f"[Research Agent] Ticker: {ticker} | Spot: ${spot_price} | IV Rank: {simulated_iv_rank}%")
         
         # Strategy selection based on Implied Volatility Rank (IVR)
         if simulated_iv_rank > 50:
