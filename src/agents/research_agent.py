@@ -43,9 +43,18 @@ class OptionsSpreadResearcher:
     MIN_CONFIDENCE = 0.65
 
     def __init__(self, llm_client: Optional[Any] = None, model_name: Optional[str] = None):
-        self.model_name = model_name or os.getenv("LLM_MODEL_NAME", "gpt-4o-mini")
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        self.client = llm_client or (OpenAI(api_key=self.api_key) if OpenAI and self.api_key else None)
+        self.model_name = model_name or os.getenv("LLM_MODEL_NAME", "gemini-2.0-flash")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        legacy_openai_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = gemini_key or legacy_openai_key
+
+        base_url = None
+        if gemini_key:
+            base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+        self.client = llm_client or (
+            OpenAI(api_key=self.api_key, base_url=base_url) if OpenAI and self.api_key else None
+        )
         self.llm_enabled = bool(self.api_key and self.client)
 
         self.alpaca_api_key = os.getenv("ALPACA_API_KEY")
