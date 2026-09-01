@@ -170,4 +170,4 @@ async def run_live_market_monitor(symbols=None, poll_seconds: int = 30, max_cycl
 
 
 if __name__ == "__main__":
-    asyncio.run(run_live_market_monitor(["SPY", "QQQ", "IWM"], poll_seconds=10))
+    asyncio.run(run_live_market_monitor(["NVDA"], poll_seconds=10))
