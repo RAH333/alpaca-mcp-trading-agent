@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
-    from openai import OpenAI
+    from google import genai
 except ImportError:  # pragma: no cover
-    OpenAI = None
+    genai = None
 
 try:
     from alpaca.data.historical.option import OptionHistoricalDataClient
@@ -43,18 +43,17 @@ class OptionsSpreadResearcher:
     MIN_CONFIDENCE = 0.65
 
     def __init__(self, llm_client: Optional[Any] = None, model_name: Optional[str] = None):
-        self.model_name = model_name or os.getenv("LLM_MODEL_NAME", "gemini-2.0-flash")
-        gemini_key = os.getenv("GEMINI_API_KEY")
-        legacy_openai_key = os.getenv("OPENAI_API_KEY")
-        self.api_key = gemini_key or legacy_openai_key
+        self.model_name = model_name or os.getenv("LLM_MODEL_NAME", "gemini-2.5-flash")
+        self.api_key = os.getenv("GEMINI_API_KEY")
 
-        base_url = None
-        if gemini_key:
-            base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
-
-        self.client = llm_client or (
-            OpenAI(api_key=self.api_key, base_url=base_url) if OpenAI and self.api_key else None
-        )
+        self.client = None
+        if llm_client is not None:
+            self.client = llm_client
+        elif genai and self.api_key:
+            try:
+                self.client = genai.Client(api_key=self.api_key)
+            except Exception:
+                self.client = None
         self.llm_enabled = bool(self.api_key and self.client)
 
         self.alpaca_api_key = os.getenv("ALPACA_API_KEY")
@@ -396,68 +395,26 @@ Return JSON with this exact schema:
 """
 
     def _build_tool_schema(self) -> List[Dict[str, Any]]:
-        """Strict OpenAI tool-calling schema for a more AI-native options workflow."""
-        return [
-            {
-                "type": "function",
-                "function": {
-                    "name": "score_option_setup",
-                    "description": "Score a live option setup for risk, liquidity, and conviction before turning it into a trade signal.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "symbol": {"type": "string"},
-                            "iv_rank": {"type": "number"},
-                            "liquidity_score": {"type": "number"},
-                            "trend_score": {"type": "number"},
-                            "direction": {"type": "string", "enum": ["BULLISH", "BEARISH", "NEUTRAL"]},
-                        },
-                        "required": ["symbol", "iv_rank", "liquidity_score", "trend_score", "direction"],
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "propose_option_spread",
-                    "description": "Produce the final options spread recommendation from the scored live chain.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "symbol": {"type": "string"},
-                            "strategy": {"type": "string"},
-                            "direction": {"type": "string"},
-                            "confidence": {"type": "number"},
-                            "rationale": {"type": "string"},
-                            "legs": {"type": "array"},
-                            "max_risk": {"type": "number"},
-                        },
-                        "required": ["symbol", "strategy", "direction", "confidence", "rationale", "legs"],
-                    },
-                },
-            },
-        ]
+        """Structured schema for the model to follow when generating a JSON proposal."""
+        return []
 
     def _extract_ai_json(self, response: Any) -> Optional[Dict[str, Any]]:
-        """Extract the model payload, preferring tool-call output or JSON content."""
+        """Extract the model payload from the Gemini response or fallback JSON content."""
         try:
-            message = getattr(response.choices[0], "message", None)
-            if message is None:
-                return None
+            if hasattr(response, "text") and response.text:
+                text = str(response.text).strip()
+                if text.startswith("```"):
+                    text = text.strip("`").strip()
+                    if text.lower().startswith("json"):
+                        text = text[4:].strip()
+                return json.loads(text)
 
-            if getattr(message, "tool_calls", None):
-                tool_call = message.tool_calls[0]
-                args = getattr(tool_call, "function", None)
-                if args is not None:
-                    raw_args = getattr(args, "arguments", None)
-                    if isinstance(raw_args, str):
-                        return json.loads(raw_args)
-                    if isinstance(raw_args, dict):
-                        return raw_args
-
-            content = getattr(message, "content", None)
-            if content:
-                return json.loads(content)
+            if hasattr(response, "candidates") and response.candidates:
+                first = response.candidates[0]
+                if hasattr(first, "content") and hasattr(first.content, "parts"):
+                    text = "".join(part.text for part in first.content.parts if getattr(part, "text", None))
+                    if text:
+                        return json.loads(text)
         except Exception:
             return None
         return None
@@ -470,25 +427,25 @@ Return JSON with this exact schema:
             return self._fallback_strategy(ticker, chain, iv_rank)
 
         try:
-            response = self.client.chat.completions.create(
+            config = None
+            if hasattr(genai, "types"):
+                try:
+                    config = genai.types.GenerateContentConfig(
+                        temperature=0.2,
+                        response_mime_type="application/json",
+                    )
+                except Exception:
+                    config = None
+
+            response = self.client.models.generate_content(
                 model=self.model_name,
-                temperature=0.2,
-                response_format={"type": "json_object"},
-                messages=[
+                contents=[
                     {
-                        "role": "system",
-                        "content": (
-                            "You are an autonomous volatility and options research specialist. "
-                            "Use only the provided live market data, keep all risk controls strict, "
-                            "and only propose defined-risk options trades when the setup is high conviction. "
-                            "If the data is weak, return HOLD with confidence 0.0."
-                        ),
-                    },
-                    {"role": "user", "content": prompt},
+                        "role": "user",
+                        "parts": [{"text": prompt}],
+                    }
                 ],
-                tools=self._build_tool_schema(),
-                tool_choice="auto",
-                max_tokens=500,
+                config=config,
             )
 
             parsed = self._extract_ai_json(response)
