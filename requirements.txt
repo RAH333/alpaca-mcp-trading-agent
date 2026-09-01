@@ -3,3 +3,4 @@ mcp>=0.1.0
 google-genai>=1.0.0
 python-dotenv>=1.0.1
 asyncio>=3.4.3
+pytest==7.4.2
