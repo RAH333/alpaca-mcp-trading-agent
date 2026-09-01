@@ -10,7 +10,7 @@ class TradingConfig:
     IS_PAPER = os.getenv("ALPACA_IS_PAPER", "true").lower() == "true"
 
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-2.5-flash")
+    MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-3.6-flash")
     LLM_ENABLED = bool(GEMINI_API_KEY)
 
     # Financial Controls

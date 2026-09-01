@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 
 from dotenv import load_dotenv
+load_dotenv()
 
 # Ensure the runtime environment can discover local project directory paths
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

@@ -43,8 +43,12 @@ class OptionsSpreadResearcher:
     MIN_CONFIDENCE = 0.65
 
     def __init__(self, llm_client: Optional[Any] = None, model_name: Optional[str] = None):
-        self.model_name = model_name or os.getenv("LLM_MODEL_NAME", "gemini-2.5-flash")
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        load_dotenv()
+
+        raw_model = model_name or os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL_NAME") or "gemini-3.6-flash"
+        self.model_name = raw_model.replace("models/", "").strip("'\" ")
+
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
         self.client = None
         if llm_client is not None:
@@ -52,9 +56,15 @@ class OptionsSpreadResearcher:
         elif genai and self.api_key:
             try:
                 self.client = genai.Client(api_key=self.api_key)
-            except Exception:
+            except Exception as e:
+                print(f"[⚠️ Gemini Init Error] {e}")
                 self.client = None
         self.llm_enabled = bool(self.api_key and self.client)
+
+        if self.llm_enabled:
+            print(f"[🤖 AI Model Active] Initialized Gemini client with model: '{self.model_name}'")
+        else:
+            print("[⚠️ AI Model Disabled] API key missing or client uninitialized.")
 
         self.alpaca_api_key = os.getenv("ALPACA_API_KEY")
         self.alpaca_secret_key = os.getenv("ALPACA_SECRET_KEY")
@@ -424,6 +434,7 @@ Return JSON with this exact schema:
         prompt = self._build_prompt(ticker, chain, iv_rank)
 
         if self.client is None:
+            print(f"[⚠️ AI Model Disabled] No Gemini client available for {ticker}; using fallback HOLD logic.")
             return self._fallback_strategy(ticker, chain, iv_rank)
 
         try:
@@ -437,19 +448,26 @@ Return JSON with this exact schema:
                 except Exception:
                     config = None
 
+            print(f"[🤖 AI Model Call] Querying {self.model_name} for strategy recommendation on {ticker}...")
+
             response = self.client.models.generate_content(
                 model=self.model_name,
-                contents=[
-                    {
-                        "role": "user",
-                        "parts": [{"text": prompt}],
-                    }
-                ],
+                contents=prompt,
                 config=config,
             )
 
+            try:
+                raw_output = getattr(response, "text", None)
+                if raw_output is not None:
+                    print(f"[✅ AI Response Received] Raw Model Output:\n{raw_output}")
+                else:
+                    print(f"[✅ AI Response Received] Raw Model Output: {response}")
+            except Exception:
+                print(f"[✅ AI Response Received] Raw Model Output: {response}")
+
             parsed = self._extract_ai_json(response)
             if parsed is None:
+                print("[⚠️ AI Parse Failed] Model returned unusable JSON; falling back to local fallback logic.")
                 return self._fallback_strategy(ticker, chain, iv_rank)
 
             normalized = self._normalize_response(parsed, iv_rank)
@@ -457,10 +475,12 @@ Return JSON with this exact schema:
                 return normalized
 
             if normalized.get("strategy") not in self.VALID_STRATEGIES:
+                print(f"[⚠️ AI Invalid Strategy] {normalized.get('strategy')} is not allowed; falling back.")
                 return self._fallback_strategy(ticker, chain, iv_rank)
 
             return normalized
-        except Exception:
+        except Exception as e:
+            print(f"[⚠️ Fallback Triggered] Gemini API call failed ({e}). Reverting to local math.")
             return self._fallback_strategy(ticker, chain, iv_rank)
 
     def _normalize_response(self, payload: Dict[str, Any], iv_rank: float) -> Dict[str, Any]:
