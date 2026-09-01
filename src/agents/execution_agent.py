@@ -1,6 +1,14 @@
 import asyncio
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+try:
+    from alpaca.data.historical.option import OptionHistoricalDataClient
+    from alpaca.data.requests import OptionChainRequest
+except ImportError:  # pragma: no cover
+    OptionHistoricalDataClient = None  # type: ignore[assignment]
+    OptionChainRequest = None  # type: ignore[assignment]
 
 try:
     from alpaca.trading.client import TradingClient
@@ -67,13 +75,55 @@ class OptionsExecutionAgent:
             return expiry_str
         raise ValueError(f"Unsupported option expiry format: {expiry!r}")
 
+    def _resolve_valid_expiry(self, underlying: str, expiry: Any) -> str:
+        expiry_code = self._normalize_expiry(expiry)
+
+        if not OptionHistoricalDataClient or not OptionChainRequest:
+            return expiry_code
+
+        api_key = os.getenv("ALPACA_API_KEY")
+        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        if not api_key or not secret_key:
+            return expiry_code
+
+        try:
+            client = OptionHistoricalDataClient(api_key=api_key, secret_key=secret_key)
+            chain = client.get_option_chain(OptionChainRequest(underlying_symbol=str(underlying or "").upper()))
+            valid_expiries = {
+                str(symbol)[3:9]
+                for symbol in (chain or {}).keys()
+                if isinstance(symbol, str) and len(symbol) >= 9 and str(symbol)[:3].upper() == str(underlying or "").upper()[:3]
+            }
+            if expiry_code in valid_expiries:
+                return expiry_code
+
+            try:
+                target = datetime.strptime(f"20{expiry_code[0:2]}-{expiry_code[2:4]}-{expiry_code[4:6]}", "%Y-%m-%d")
+            except Exception:
+                return expiry_code
+
+            def _day_delta(candidate: str) -> int:
+                try:
+                    candidate_dt = datetime.strptime(f"20{candidate[0:2]}-{candidate[2:4]}-{candidate[4:6]}", "%Y-%m-%d")
+                    return abs((candidate_dt - target).days)
+                except Exception:
+                    return 10**9
+
+            sorted_expiries = sorted(valid_expiries, key=_day_delta)
+            if sorted_expiries:
+                return sorted_expiries[0]
+        except Exception:
+            pass
+
+        return expiry_code
+
     def _build_option_symbol(self, underlying: str, strike: Any, expiry: Any, option_type: str) -> str:
         underlying = str(underlying or "").upper().strip()
         option_type = str(option_type or "").upper().strip()
         if option_type not in {"CALL", "PUT"}:
             raise ValueError(f"Unsupported option type: {option_type!r}")
 
-        expiry_code = self._normalize_expiry(expiry)
+        expiry_code = self._resolve_valid_expiry(underlying, expiry)
         strike_price = self._safe_float(strike)
         strike_digits = int(round(strike_price * 1000))
         return f"{underlying}{expiry_code}{option_type[0]}{strike_digits:08d}"
@@ -241,6 +291,14 @@ class OptionsExecutionAgent:
         exit_value = self._safe_float(exit_price, entry_price)
         pnl = exit_value - entry_price
 
+        broker_result = None
+        if self.client and not self.dry_run:
+            try:
+                broker_result = self.client.close_position(key)
+            except Exception as exc:
+                print(f"[⚠️ Close Warning] Alpaca close failed for {key}: {exc}")
+                broker_result = {"status": "ERROR", "message": str(exc)}
+
         self.positions[key]["is_open"] = False
         self.positions[key]["exit_price"] = exit_value
         self.positions[key]["exit_reason"] = reason
@@ -254,6 +312,7 @@ class OptionsExecutionAgent:
                 "entry_price": entry_price,
                 "exit_price": exit_value,
                 "pnl": pnl,
+                "broker_result": broker_result,
             }
         )
 
@@ -264,6 +323,7 @@ class OptionsExecutionAgent:
             "entry_price": entry_price,
             "exit_price": exit_value,
             "pnl": pnl,
+            "broker_result": broker_result,
         }
 
     async def evaluate_exit_conditions(self, symbol: str, current_price: float) -> Dict[str, Any]:
@@ -324,7 +384,7 @@ class OptionsExecutionAgent:
             if getattr(account, "status", "") != "ACTIVE":
                 return {"status": "ACCOUNT_INACTIVE", "strategy_executed": strategy}
 
-            order = self.client.submit_order(order=order_request)
+            order = self.client.submit_order(order_request)
             return {
                 "status": "FILLED",
                 "strategy_executed": strategy,

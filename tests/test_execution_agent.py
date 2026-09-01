@@ -61,6 +61,35 @@ class TestExecutionAgent(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(target_result["status"], "CLOSED")
         self.assertEqual(target_result["reason"], "target")
 
+    async def test_close_position_submits_real_alpaca_close_order(self):
+        class FakeClient:
+            def __init__(self):
+                self.closed = []
+
+            def close_position(self, symbol):
+                self.closed.append(symbol)
+                return {"symbol": symbol, "status": "closed"}
+
+        agent = OptionsExecutionAgent(dry_run=False)
+        agent.client = FakeClient()
+        agent.positions["SPY"] = {
+            "symbol": "SPY",
+            "strategy": "BULL_CALL_DEBIT_SPREAD",
+            "is_open": True,
+            "entry_price": 100.0,
+            "max_risk": 5.0,
+            "confidence": 0.9,
+            "stop_loss_pct": 0.10,
+            "take_profit_pct": 0.20,
+            "legs": [],
+        }
+
+        result = await agent.close_position("SPY", "target", exit_price=110.0)
+
+        self.assertEqual(result["status"], "CLOSED")
+        self.assertEqual(agent.client.closed, ["SPY"])
+        self.assertFalse(agent.has_open_position("SPY"))
+
 
 if __name__ == "__main__":
     unittest.main()

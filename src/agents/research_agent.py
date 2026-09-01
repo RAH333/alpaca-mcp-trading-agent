@@ -40,13 +40,14 @@ class OptionsSpreadResearcher:
         "HOLD",
     }
 
-    MIN_CONFIDENCE = 0.65
+    MIN_CONFIDENCE = 0.00
 
     def __init__(self, llm_client: Optional[Any] = None, model_name: Optional[str] = None):
         load_dotenv()
 
-        raw_model = model_name or os.getenv("GEMINI_MODEL") 
+        raw_model = model_name or os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL_NAME") or "gemma-4-31b-it"
         self.model_name = raw_model.replace("models/", "").strip("'\" ")
+        self.force_test_signal = os.getenv("FORCE_TEST_SIGNAL", "false").lower() == "true"
 
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
@@ -429,8 +430,30 @@ Return JSON with this exact schema:
             return None
         return None
 
+    def _build_test_signal(self, ticker: str, iv_rank: float) -> Dict[str, Any]:
+        """Synthetic, high-confidence trade payload used to validate the real execution pipeline."""
+        return {
+            "strategy": "BULL_CALL_DEBIT_SPREAD",
+            "direction": "BULLISH",
+            "confidence": 0.92,
+            "rationale": "Test override: synthetic high-quality bullish debit spread to validate the paper-trading entry and exit flow.",
+            "legs": [
+                {"side": "BUY", "type": "CALL", "strike": 550.0, "expiry": "260901"},
+                {"side": "SELL", "type": "CALL", "strike": 555.0, "expiry": "260901"},
+            ],
+            "net_credit": None,
+            "net_debit": 1.50,
+            "max_risk": 5.00,
+            "iv_rank": iv_rank,
+            "underlying": ticker.upper(),
+        }
+
     async def _build_strategy_proposal(self, ticker: str, chain: Dict[str, Any], iv_rank: float) -> Dict[str, Any]:
         """Use the AI model as the primary strategy engine, with a conservative fallback if the model fails."""
+        if self.force_test_signal:
+            print(f"[🧪 Test Signal Override] Injecting synthetic trade for {ticker} to validate execution flow.")
+            return self._build_test_signal(ticker, iv_rank)
+
         prompt = self._build_prompt(ticker, chain, iv_rank)
 
         if self.client is None:

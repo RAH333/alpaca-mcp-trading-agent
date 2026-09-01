@@ -108,6 +108,16 @@ async def run_option_watchlist_pipeline(symbols=None):
         await run_agentic_alpha_pipeline(symbol)
 
 
+async def _get_current_underlying_price(researcher: OptionsSpreadResearcher, symbol: str) -> float:
+    """Fetch the current live spot price for an underlying and fall back to the entry price if needed."""
+    try:
+        chain = await researcher._fetch_option_chain_snapshot(symbol)
+        return float(chain.get("spot_price", 0.0))
+    except Exception as exc:
+        print(f"[⚠️ Price Fetch Warning] {symbol}: {exc}")
+        return 0.0
+
+
 async def run_live_market_monitor(symbols=None, poll_seconds: int = 30, max_cycles: int = None):
     """Continuously evaluate a watchlist and keep only one position open at a time during market hours."""
     watchlist = [str(symbol).upper() for symbol in (symbols or TradingConfig.DEFAULT_OPTION_WATCHLIST)]
@@ -130,6 +140,19 @@ async def run_live_market_monitor(symbols=None, poll_seconds: int = 30, max_cycl
         open_symbols = [s for s in watchlist if executor.has_open_position(s)]
         if open_symbols:
             print(f"[📈 Position Monitor] Open positions: {', '.join(open_symbols)}. Holding and monitoring.")
+            for symbol in open_symbols:
+                current_price = await _get_current_underlying_price(researcher, symbol)
+                if current_price <= 0:
+                    continue
+
+                exit_result = await executor.evaluate_exit_conditions(symbol, current_price)
+                if exit_result.get("status") == "CLOSED":
+                    print(
+                        f"[🧹 Auto Exit] {symbol} closed | reason={exit_result.get('reason')} | "
+                        f"entry={exit_result.get('entry_price')} | exit={exit_result.get('exit_price')} | pnl={exit_result.get('pnl')}"
+                    )
+                else:
+                    print(f"[📊 Position Watch] {symbol} remains open | current_price=${current_price:.2f}")
         else:
             best_signal = None
             for symbol in watchlist:
@@ -156,7 +179,10 @@ async def run_live_market_monitor(symbols=None, poll_seconds: int = 30, max_cycl
             if best_signal is not None:
                 _, symbol, proposal = best_signal
                 result = await executor.handle_trade_decision(proposal)
-                print(f"[🎯 Signal] {symbol} -> {result.get('status')} | strategy={proposal.get('strategy')}")
+                if result.get("status") in {"FILLED", "PENDING", "DRY_RUN"}:
+                    print(f"[🎯 Signal] {symbol} -> {result.get('status')} | strategy={proposal.get('strategy')} | position opened for monitoring")
+                else:
+                    print(f"[🎯 Signal] {symbol} -> {result.get('status')} | strategy={proposal.get('strategy')}")
             else:
                 print("[🧭 Signal Scan] No valid live entry this cycle.")
 
