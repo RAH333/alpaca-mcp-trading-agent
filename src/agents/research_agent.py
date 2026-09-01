@@ -45,7 +45,7 @@ class OptionsSpreadResearcher:
     def __init__(self, llm_client: Optional[Any] = None, model_name: Optional[str] = None):
         load_dotenv()
 
-        raw_model = model_name or os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL_NAME") or "gemini-3.6-flash"
+        raw_model = model_name or os.getenv("GEMINI_MODEL") 
         self.model_name = raw_model.replace("models/", "").strip("'\" ")
 
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")

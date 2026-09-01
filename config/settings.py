@@ -10,7 +10,7 @@ class TradingConfig:
     IS_PAPER = os.getenv("ALPACA_IS_PAPER", "true").lower() == "true"
 
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-3.6-flash")
+    MODEL_NAME = os.getenv("GEMINI_MODEL")
     LLM_ENABLED = bool(GEMINI_API_KEY)
 
     # Financial Controls
@@ -23,7 +23,7 @@ class TradingConfig:
     # Options-first market watchlist
     DEFAULT_OPTION_WATCHLIST = [
         item.strip().upper()
-        for item in os.getenv("OPTION_WATCHLIST", "SPY,QQQ,IWM").split(",")
+        for item in os.getenv("OPTION_WATCHLIST", "NVDA").split(",")
         if item.strip()
     ]
 
