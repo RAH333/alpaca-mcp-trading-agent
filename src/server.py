@@ -24,7 +24,7 @@ class AutonomousTradingRuntime:
         logger.info(f"Routing detected spread sequence model ({proposed_spread['strategy']}) to risk processors...")
         execution_receipt = await self.executor.execute_multi_leg_spread(proposed_spread)
         
-        print(f"\n[🏁 Sequence Summary] Processing Results: {execution_receipt['status']}")
+        print(f"\n[ Sequence Summary] Processing Results: {execution_receipt['status']}")
         print("====================================================================\n")
 
 if __name__ == "__main__":
