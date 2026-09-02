@@ -72,7 +72,7 @@ class OptionsSpreadResearcher:
                 "max_risk": 2.10
             }
 
-    # 🔗 THE SAFETY ALIASING BRIDGE
+    # THE SAFETY ALIASING BRIDGE
     # This guarantees that if any code calls 'analyze_market', it maps right back to our function!
     analyze_market = analyze_options_chain
     
