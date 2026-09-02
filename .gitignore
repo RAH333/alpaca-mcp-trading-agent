@@ -5,6 +5,10 @@ __pycache__/
 
 # Environments & Packages
 .env
+config/mcp_config.json
+__pycache__/
+*.pyc
+.uv/
 .venv
 env/
 venv/
