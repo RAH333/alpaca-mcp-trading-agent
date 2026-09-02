@@ -1,3 +1,6 @@
+# The Research Core
+
+
 import asyncio
 import random
 from config.settings import TradingConfig
@@ -23,7 +26,7 @@ class OptionsSpreadResearcher:
         else:
             raise ValueError(f"Unknown LLM Provider: {self.provider}")
 
-    async def analyze_options_chain(self, ticker: str) -> dict:
+    async def analyze_market(self, symbol: str) -> str:
         """
         Reads historical telemetry via universal decorators and uses the 
         active LLM engine to choose strategies.
@@ -69,4 +72,3 @@ class OptionsSpreadResearcher:
                 "net_debit": 2.10,
                 "max_risk": 2.10
             }
-            
