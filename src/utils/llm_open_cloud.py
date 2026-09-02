@@ -8,5 +8,5 @@ class OpenCloudAdapter:
         self.model = TradingConfig.MODEL_NAME if "claude" in TradingConfig.MODEL_NAME.lower() else "claude-3-5-sonnet"
 
     async def execute_structured_prompt(self, system_instruction: str, user_payload: str) -> dict:
-        logger.info(f"🪐 Dispatching message block contexts down to OpenCloud Claude Engine [{self.model}]")
+        logger.info(f" Dispatching message block contexts down to OpenCloud Claude Engine [{self.model}]")
         return {"provider": "open_cloud", "model": self.model}
