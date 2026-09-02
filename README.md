@@ -62,7 +62,11 @@ alpaca-mcp-trading-agent/
 │   │   └── execution_agent.py     # Interacts directly with Alpaca tools via MCP commands
 │   └── utils/
 │       ├── __init__.py
-│       └── helpers.py              # Logging and payload formatters
+│       ├── helpers.py           # UNIVERSAL: Logging, text formatting, token counters
+│       │                        # Logging and payload formatters
+│       ├── llm_openai.py        # OPENAI-SPECIFIC: Payload parsers, tool calling schemas
+│       ├── llm_claude.py        # CLAUDE-SPECIFIC: Message block formatters
+│       └── llm_gemini.py        # GEMINI-SPECIFIC: Content/Part wrappers, model safety.    │                                  settings
 ├── tests/
 │   └── test_agents.py             # Simple unit tests for system validation
 ├── .env.example                   # Clean template for API keys
