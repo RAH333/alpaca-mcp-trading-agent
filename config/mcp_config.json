@@ -9,8 +9,8 @@
         "mcp-server-alpaca"
       ],
       "env": {
-        "ALPACA_API_KEY": "your_paper_api_key_here",
-        "ALPACA_SECRET_KEY": "your_paper_secret_key_here",
+        "ALPACA_API_KEY": "your_actual_alpaca_paper_key_here",
+        "ALPACA_SECRET_KEY": "your_actual_alpaca_secret_here",
         "ALPACA_USE_PAPER": "true"
       }
     }
