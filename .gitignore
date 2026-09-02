@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments & Packages
+.env
+config/mcp_config.json
+__pycache__/
+*.pyc
+.uv/
+.venv
+env/
+venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project configuration tooling
+.idea/
+.vscode/
+*.swp

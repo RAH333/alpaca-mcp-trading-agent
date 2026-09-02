@@ -1,35 +1,44 @@
-"""
-# Execution Agent Handler
-This wraps standard actions or handles tasks mapped 
-from Alpaca MCP tools (like getting account info, placing market or limit orders, and 
-pulling asset metrics).
-"""
-from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce
+import asyncio
+from config.settings import TradingConfig
+from src.utils.helpers import logger
 
-class TradeExecutor:
-    def __init__(self, trading_client):
+class OptionsExecutionAgent:
+    """Verifies leg configuration parameters and simulates direct execution."""
+    def __init__(self, trading_client=None, max_allowed_risk=0.05):
         self.client = trading_client
+        self.max_allowed_risk = max_allowed_risk
 
-    async def execute_signal(self, symbol: str, side: str) -> str:
-        """
-        Executes simulated market orders on Alpaca Paper Engine.
-        Can be natively hooked into Alpaca's MCP Server configuration.
-        """
-        order_side = OrderSide.BUY if side == "BUY" else OrderSide.SELL
+    async def run_risk_guardrail(self, proposed_trade: dict) -> bool:
+        """Deterministic risk verification to ensure safety boundaries are met."""
+        logger.info("[ Risk Engine] Validating structure matching against portfolio boundaries...")
+        await asyncio.sleep(0.5)
         
-        # Construct parameters for a standard market execution payload
-        market_order_data = MarketOrderRequest(
-            symbol=symbol,
-            qty=1,
-            side=order_side,
-            time_in_force=TimeInForce.DAY
-        )
+        # Structural check on maximum contract configurations
+        if len(proposed_trade["legs"]) > TradingConfig.MAX_LEG_COUNT:
+            logger.error(f"[ Risk Violation] Trade details contain {len(proposed_trade['legs'])} legs. Maximum allowed is {TradingConfig.MAX_LEG_COUNT}.")
+            return False
+            
+        if proposed_trade["max_risk"] > 5.00:
+            logger.error(f"[ Risk Violation] Transaction structure risk allocation (${proposed_trade['max_risk']}) exceeds allowable bounds.")
+            return False
+            
+        logger.info("[ Risk Matrix Clear] Execution layout satisfies all risk constraints.")
+        return True
+
+    async def execute_multi_leg_spread(self, spread_payload: dict) -> dict:
+        """Simulates final trade execution via the network context."""
+        is_safe = await self.run_risk_guardrail(spread_payload)
+        if not is_safe:
+            return {"status": "REJECTED_BY_RISK_ENGINE"}
+            
+        logger.info(f"[ Dispatcher] Routing orders to live books for target ticker: {spread_payload['underlying']}")
         
-        try:
-            # Submit to the exchange endpoint
-            order = self.client.submit_order(order_data=market_order_data)
-            return f"Success! Order ID: {order.id} | Status: {order.status}"
-        except Exception as e:
-            return f"Execution Failure: {str(e)}"
-          
+        for index, leg in enumerate(spread_payload["legs"], start=1):
+            print(f"   -> Leg #{index}: {leg['side']} {leg['type']} | Strike: ${leg['strike']} | Expiry: {leg['expiry']}")
+            await asyncio.sleep(0.3)
+            
+        return {
+            "status": "FILLED",
+            "strategy_executed": spread_payload["strategy"],
+            "net_premium_effect": spread_payload.get("net_credit") or spread_payload.get("net_debit")
+        }
