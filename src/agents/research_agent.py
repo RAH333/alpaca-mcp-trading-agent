@@ -1,6 +1,5 @@
 # The Research Core
 
-
 import asyncio
 import random
 from config.settings import TradingConfig
@@ -26,7 +25,7 @@ class OptionsSpreadResearcher:
         else:
             raise ValueError(f"Unknown LLM Provider: {self.provider}")
 
-    async def analyze_market(self, symbol: str) -> str:
+    async def analyze_options_chain(self, ticker: str) -> dict:
         """
         Reads historical telemetry via universal decorators and uses the 
         active LLM engine to choose strategies.
@@ -37,7 +36,7 @@ class OptionsSpreadResearcher:
         simulated_iv_rank = random.randint(30, 85)
         spot_price = 150.00
         
-        # Utilize the universal formatting utility component
+        # FIXED: Changed from 'ticker' to match the function's input parameter safely
         telemetry_log = UniversalFormatters.format_market_payload(ticker, spot_price, simulated_iv_rank)
         print(telemetry_log)
         
@@ -72,3 +71,8 @@ class OptionsSpreadResearcher:
                 "net_debit": 2.10,
                 "max_risk": 2.10
             }
+
+    # 🔗 THE SAFETY ALIASING BRIDGE
+    # This guarantees that if any code calls 'analyze_market', it maps right back to our function!
+    analyze_market = analyze_options_chain
+    
