@@ -2,14 +2,11 @@
 set -e
 
 echo "=========================================================="
-echo "INITIALIZING AUTOMATED ENVIRONMENT CONTEXT"
+echo "🤖 INITIALIZING AUTOMATED ENVIRONMENT CONTEXT"
 echo "=========================================================="
 
-python3 -m pip install --upgrade pip
-pip install -r requirements.txt
-
 echo -e "\n=========================================================="
-echo "PASTE YOUR SECURITY PARAMETERS BELOW & PRESS ENTER:"
+echo "🔑 PASTE YOUR SECURITY PARAMETERS BELOW & PRESS ENTER:"
 echo "=========================================================="
 
 read -p "🔹 Enter Alpaca API Key: " alpaca_key
@@ -18,19 +15,19 @@ read -p "🔹 Enter OpenAI API Key (Leave blank if using Gemini): " openai_key
 read -p "🔹 Enter Gemini API Key (Leave blank if using OpenAI): " gemini_key
 read -p "🔹 Enter Open Cloud Key (Leave blank if using others): " opencloud_key
 
-# INTELLIGENT ROUTING AUTOMATION AUTO-DETECTION
-# Dynamically configures the provider block based on which key you actually provided
-if [ -not -z "$gemini_key" ]; then
+# 🧠 FIXED INTELLIGENT AUTO-DETECTION SYSTEM
+# Using standard bash string tests [ -n "$var" ] to see if a key has been pasted
+if [ -n "$gemini_key" ]; then
     provider="gemini"
     model="gemini-2.5-flash"
-elif [ -not -z "$openai_key" ]; then
+elif [ -n "$openai_key" ]; then
     provider="openai"
     model="gpt-4o"
-elif [ -not -z "$opencloud_key" ]; then
+elif [ -n "$opencloud_key" ]; then
     provider="open_cloud"
     model="claude-3-5-sonnet"
 else
-    # Fallback default configuration state if keys are handled independently
+    # Safety fallback default state
     provider="openai"
     model="gpt-4o"
 fi
@@ -77,7 +74,7 @@ cat << EOF > config/mcp_config.json
 }
 EOF
 
-echo -e "\n WORKSPACE ARCHITECTURE SAFELY PROVISIONED!"
+echo -e "\n✅ WORKSPACE ARCHITECTURE SAFELY PROVISIONED!"
 echo "=========================================================="
 
 python3 main.py
