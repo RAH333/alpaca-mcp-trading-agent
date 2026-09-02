@@ -66,7 +66,7 @@ alpaca-mcp-trading-agent/
 │       │                        # Logging and payload formatters
 │       ├── llm_openai.py        # OPENAI-SPECIFIC: Payload parsers, tool calling schemas
 │       ├── llm_claude.py        # CLAUDE-SPECIFIC: Message block formatters
-│       └── llm_gemini.py        # GEMINI-SPECIFIC: Content/Part wrappers, model safety.    │                                  settings
+│       └── llm_gemini.py        # GEMINI-SPECIFIC: Content/Part wrappers, model safety settings
 ├── tests/
 │   └── test_agents.py             # Simple unit tests for system validation
 ├── .env.example                   # Clean template for API keys
