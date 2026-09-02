@@ -44,7 +44,7 @@ If you are evaluating this repository via a mobile cloud terminal environment wh
 
 1. **Clone the Project Repository Workspace:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/RAH333/alpaca-mcp-trading-agent.git
    cd alpaca-mcp-trading-agent
    ```
 2. **Make the Automation Engine Executable:**
