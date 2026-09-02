@@ -6,7 +6,7 @@ echo "🤖 INITIALIZING AUTOMATED ENVIRONMENT CONTEXT"
 echo "=========================================================="
 
 echo -e "\n=========================================================="
-echo "🔑 PASTE YOUR SECURITY PARAMETERS BELOW & PRESS ENTER:"
+echo " PASTE YOUR SECURITY PARAMETERS BELOW & PRESS ENTER:"
 echo "=========================================================="
 
 read -p "🔹 Enter Alpaca API Key: " alpaca_key
@@ -15,11 +15,11 @@ read -p "🔹 Enter OpenAI API Key (Leave blank if using Gemini): " openai_key
 read -p "🔹 Enter Gemini API Key (Leave blank if using OpenAI): " gemini_key
 read -p "🔹 Enter Open Cloud Key (Leave blank if using others): " opencloud_key
 
-# 🧠 FIXED INTELLIGENT AUTO-DETECTION SYSTEM
+# FIXED INTELLIGENT AUTO-DETECTION SYSTEM
 # Using standard bash string tests [ -n "$var" ] to see if a key has been pasted
 if [ -n "$gemini_key" ]; then
     provider="gemini"
-    model="gemini-2.5-flash"
+    model="gemini-2.5-flash" # "gemini-1.5-flash" 
 elif [ -n "$openai_key" ]; then
     provider="openai"
     model="gpt-4o"
@@ -74,7 +74,7 @@ cat << EOF > config/mcp_config.json
 }
 EOF
 
-echo -e "\n✅ WORKSPACE ARCHITECTURE SAFELY PROVISIONED!"
+echo -e "\nWORKSPACE ARCHITECTURE SAFELY PROVISIONED!"
 echo "=========================================================="
 
 python3 main.py
