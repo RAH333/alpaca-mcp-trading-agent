@@ -1,116 +1,124 @@
-# alpaca-mcp-trading-agent
-Alpaca MCP Trading Agent: An asynchronous AI agent running over modern multi-agent routing.
+# AgenticAlpha: Multi-Leg Option Spread Autonomous Trading Infrastructure
 
-
-
-
-# AgenticAlpha: Autonomous AI Trading Agent System
-
-Developed for the **[Alpaca AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/alpaca-ai-trading-agents-hackathon)** on lablab.ai.
+Developed live for the official **[Alpaca AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/alpaca-ai-trading-agents-hackathon)** hosted on lablab.ai.
 
 ## Overview
-AgenticAlpha is an open-source, multi-agent algorithmic infrastructure leveraging **Alpaca's Model Context Protocol (MCP) Server** and execution endpoints. It connects localized LLM intelligences with safe, live financial order books to execute multi-market trades entirely via natural language processing.
+AgenticAlpha is a next-generation autonomous multi-agent quantitative framework designed to analyze market vectors and safely manage derivative risk profiles. By integrating specialized Large Language Models with **Alpaca's Model Context Protocol (MCP) Server**, the system translates natural market conditions into robust, risk-defined option spreads (e.g., Credit Spreads and Debit Spreads) governed by programmatic guardrails.
 
-## Architecture
-- **Research Agent:** Performs continuous sentiment evaluations across real-time news APIs.
-- **Execution Agent:** Calls safe, atomic transaction routes across Alpaca's Paper Trading Engine API.
-- **MCP Middleware Layer:** Enables fluid, zero-code tool invocation through natural language command configurations.
+---
 
-## Quickstart Installation
+## System Architecture & File Layout
 
-1. Clone the open workspace:
-   ```bash
-   git clone https://github.com
-   cd alpaca-mcp-trading-agent
-   ```
-
-2. Establish your environment properties inside `.env`:
-   ```bash
-   cp .env.example .env
-   # Populate keys from your Alpaca account dashboard
-   ```
-
-3. Initialize dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Launch the automated loop simulation:
-   ```bash
-   python -m src.server
-   ```
-
-## Open Contribution
-This team is open to all skill levels! If you wish to join the design track, clone the repository, create a descriptive branch, and open a Pull Request.
-
-
-
-```
+```text
 alpaca-mcp-trading-agent/
-├── .github/
-│   └── workflows/
-│       └── test-and-lint.yml      # CI pipeline for linting & automated testing
 ├── config/
-│   ├── settings.py                # Environment validation and credentials management
-│   └── mcp_config.json            # Setup file to load the Alpaca MCP server into your AI
+│   ├── settings.py            # Unified environment parsing, schema validation & type mapping
+│   └── mcp_config.json        # Reference guide for registering Alpaca Tools into the LLM runtime
 ├── src/
-│   ├── __init__.py
-│   ├── server.py                  # Core script initializing the server runtime 
+│   ├── __init__.py            # Global module exposure context
+│   ├── server.py              # Main production orchestration heartbeat loop
 │   ├── agents/
 │   │   ├── __init__.py
-│   │   ├── research_agent.py      # Leverages LLMs to read sentiment & fetch market tickers
-│   │   └── execution_agent.py     # Interacts directly with Alpaca tools via MCP commands
+│   │   ├── research_agent.py  # Evaluates market metrics & dynamically switches core LLM engines
+│   │   └── execution_agent.py # Validates trade vectors against risk matrices before API dispatch
 │   └── utils/
 │       ├── __init__.py
-│       ├── helpers.py           # UNIVERSAL: Logging, text formatting, token counters and payload formatters
-│       ├── llm_openai.py        # OPENAI-SPECIFIC: Payload parsers, tool calling schemas
-│       ├── llm_claude.py        # CLAUDE-SPECIFIC: Message block formatters
-│       └── llm_gemini.py        # GEMINI-SPECIFIC: Content/Part wrappers, model safety settings
-├── tests/
-│   └── test_agents.py             # Simple unit tests for system validation
-├── .env.example                   # Clean template for API keys
-├── .gitignore                     # Prevents secrets leakage (.env, __pycache__)
-├── pyproject.toml                 # Modern package manager configuration (uv / poetry)
-├── requirements.txt               # Legacy package definitions
-└── README.md                      # The centerpiece submission document for judges
+│       ├── helpers.py         # Universal telemetry string formatting & logger pipelines
+│       ├── llm_openai.py      # OpenAI gpt-4o structural abstraction client
+│       ├── llm_gemini.py      # Google Gemini 1.5 structural abstraction client
+│       └── llm_open_cloud.py  # Anthropic Claude 3.5 Sonnet abstraction client
+├── main.py                    # Local Command-Line Interface and Video Script Simulator Entry-Point
+└── .gitignore                 # Enforces security exclusions (.env, private secrets, mcp_config.json)
 ```
 
+---
 
-# AgenticAlpha: Multi-Leg Option Spread Trading Agent
+## Step-by-Step Installation & Judge Testing Guide
 
-Developed live for the official **[Alpaca AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/alpaca-ai-trading-agents-hackathon)** on lablab.ai.
+Follow these sequential steps to boot and evaluate AgenticAlpha across any of the supported LLM providers:
 
-## System Architecture Overview
-AgenticAlpha solves the problem of automated derivative risk management by wrapping specialized LLM-driven research agents inside strict mathematical programmatic guardrails.
+### 1. Clone the Project Repository Workspace
+```bash
+git clone https://github.com
+cd alpaca-mcp-trading-agent
+```
 
-1. **Research Agent (src/agents/research_agent.py):** Queries Implied Volatility (IV) ranks over market indices via the Model Context Protocol (MCP) server. Formulates automated complex spreads (e.g., Credit Spreads).
-2. **Execution Guardrail Agent (src/agents/execution_agent.py):** Intercepts raw actions and runs a deterministic risk analysis to ensure positions never violate capital protection parameters.
-3. **Alpaca API Execution Core:** Dispatches programmatic options executions natively through the Alpaca Python SDK.
+### 2. Configure Local Secrets (`.env`)
+Create a localized environment file in the root directory:
+```bash
+touch .env
+```
+Open the `.env` file and populate it with your real credentials:
+```env
+# Alpaca Financial API Infrastructure Execution Credentials
+ALPACA_API_KEY=your_actual_alpaca_paper_key_here
+ALPACA_SECRET_KEY=your_actual_alpaca_secret_here
+ALPACA_IS_PAPER=true
 
-## Installation & Setup
+# Multi-LLM Provider Engine Routing Layer Configuration
+# Options: "openai" | "gemini" | "open_cloud"
+LLM_PROVIDER=openai
+LLM_MODEL_NAME=gpt-4o
 
-1. **Clone the Repo Workspace:**
-   ```bash
-   git clone https://github.com
-   cd alpaca-mcp-options-agent
-   ```
+# Individual Provider Key Entries (Populate the one matching your LLM_PROVIDER choice)
+OPENAI_API_KEY=your_openai_key_here
+GEMINI_API_KEY=your_gemini_key_here
+OPEN_CLOUD_API_KEY=your_anthropic_claude_key_here
 
-2. **Establish Environment Properties:**
-   Create a `.env` file from the repository template:
-   ```bash
-   cp .env.example .env
-   ```
-   Add your paper-trading developer parameters inside `.env`.
+# Risk Compliance Parameters
+MAX_PORTFOLIO_RISK_PERCENT=0.05
+MAX_LEG_COUNT=4
+```
 
-3. **Install Core Platform Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. Initialize Local Server Configurations (`config/mcp_config.json`)
+Create your tracking parameter configuration inside the `config/` directory:
+```bash
+mkdir -p config
+touch config/mcp_config.json
+```
+Populate `config/mcp_config.json` with your verified Alpaca runtime parameters:
+```json
+{
+  "mcpServers": {
+    "alpaca-options-server": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp-server-alpaca",
+        "mcp-server-alpaca"
+      ],
+      "env": {
+        "ALPACA_API_KEY": "your_actual_alpaca_paper_key_here",
+        "ALPACA_SECRET_KEY": "your_actual_alpaca_secret_here",
+        "ALPACA_USE_PAPER": "true"
+      }
+    }
+  }
+}
+```
 
-4. **Boot Up the Autonomous Loop Runtime:**
-   ```bash
-   python -m src.server
-   ```
+### 4. Install Dependencies
+Initialize dependencies globally using standard package managers or directly via modern performance execution tools:
+```bash
+pip install -r requirements.txt
+# Alternatively, if utilizing uv performance architecture:
+# uv pip install -r requirements.txt
+```
 
-## Open Community Team
-Our codebase is open to all hackathon members. Please request access, review outstanding GitHub Issues, map new strategy criteria into the research module, and issue clean Pull Requests!
+### 5. Run Local Pipeline & Video Simulator Loop (`main.py`)
+To test the end-to-end multi-agent execution pipeline exactly as showcased in our presentation walkthrough, trigger the local master entry-point script:
+```bash
+python main.py
+```
+
+### 6. Run Background Automated Server Module
+To activate the continuous system background orchestration execution matrix:
+```bash
+python -m src.server
+```
+
+---
+
+## Hackathon Open Community Framework
+Contributions, optimization pull requests, and additional structural options strategy maps are highly welcome! Please ensure any code changes pass local validation checks before submitting upstream merges.
