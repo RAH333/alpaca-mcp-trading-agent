@@ -2,14 +2,14 @@
 set -e
 
 echo "=========================================================="
-echo "🤖 INITIALIZING AUTOMATED ENVIRONMENT CONTEXT"
+echo "INITIALIZING AUTOMATED ENVIRONMENT CONTEXT"
 echo "=========================================================="
 
 python3 -m pip install --upgrade pip
 pip install -r requirements.txt
 
 echo -e "\n=========================================================="
-echo "🔑 PASTE YOUR SECURITY PARAMETERS BELOW & PRESS ENTER:"
+echo "PASTE YOUR SECURITY PARAMETERS BELOW & PRESS ENTER:"
 echo "=========================================================="
 
 read -p "🔹 Enter Alpaca API Key: " alpaca_key
@@ -18,7 +18,7 @@ read -p "🔹 Enter OpenAI API Key (Leave blank if using Gemini): " openai_key
 read -p "🔹 Enter Gemini API Key (Leave blank if using OpenAI): " gemini_key
 read -p "🔹 Enter Open Cloud Key (Leave blank if using others): " opencloud_key
 
-# 🧠 INTELLIGENT ROUTING AUTOMATION AUTO-DETECTION
+# INTELLIGENT ROUTING AUTOMATION AUTO-DETECTION
 # Dynamically configures the provider block based on which key you actually provided
 if [ -not -z "$gemini_key" ]; then
     provider="gemini"
@@ -77,7 +77,7 @@ cat << EOF > config/mcp_config.json
 }
 EOF
 
-echo -e "\n✅ WORKSPACE ARCHITECTURE SAFELY PROVISIONED!"
+echo -e "\n WORKSPACE ARCHITECTURE SAFELY PROVISIONED!"
 echo "=========================================================="
 
 python3 main.py
