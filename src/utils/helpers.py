@@ -1,27 +1,29 @@
 import sys
 import logging
+from datetime import datetime
 
-def configure_agent_logger():
-    """
-    Constructs a clear, high-contrast log output design for real-time 
-    execution monitoring during the pitch presentation.
-    """
-    logger = logging.getLogger("AgenticAlpha")
-    logger.setLevel(logging.INFO)
-    
-    if not logger.handlers:
-        formatter = logging.Formatter(
-            fmt='%(asctime)s | %(levelname)s | %(message)s',
-            datefmt='%H:%M:%S'
+# Initialize uniform logging matrix for hackathon evaluation visibility
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("DeltaGuardRuntime")
+
+class UniversalFormatters:
+    @staticmethod
+    def format_market_payload(ticker: str, spot_price: float, iv_rank: float) -> str:
+        """Standardizes market metrics into structured telemetry text across all tokenizers."""
+        return (
+            f"=== MARKET TELEMETRY RECEIPT ===\n"
+            f"TIMESTAMP   : {datetime.now().isoformat()}\n"
+            f"UNDERLYING  : {ticker}\n"
+            f"SPOT PRICE  : ${spot_price:.2f}\n"
+            f"IMPLIED VOLATILITY RANK: {iv_rank}%\n"
+            f"================================"
         )
-        
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        
-    return logger
 
-def format_currency(value: float) -> str:
-    """Helper method to structure currency values safely."""
-    return f"${value:,.2f}"
-  
+    @staticmethod
+    def clean_json_markdown(raw_string: str) -> str:
+        """Strips out standard markdown block decorations before passing to raw string compilers."""
+        return raw_string.replace("```json", "").replace("```", "").strip()
