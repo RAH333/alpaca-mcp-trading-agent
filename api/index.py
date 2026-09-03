@@ -3,7 +3,7 @@ import sys
 from fastapi import FastAPI, BackgroundTasks
 from dotenv import load_dotenv
 
-# Force Python to look one folder up to find your config/ and src/ directories
+# This forces the server to look one folder up to find your local project directories
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
@@ -13,28 +13,25 @@ load_dotenv()
 from config.settings import TradingConfig
 from main import run_agentic_alpha_pipeline
 
-# Vercel looks for the global variable 'app'
 app = FastAPI(title="AgenticAlpha Trading Pipeline API")
 
 @app.get("/")
 def read_root():
-    """Safe status page for your examiner."""
     try:
         TradingConfig.validate()
         config_status = "Keys Verified & Loaded Successfully."
     except Exception as e:
-        config_status = f"Public View Mode (Keys not fully configured on web server dashboard: {str(e)})"
+        config_status = f"Public View Mode (Keys not configured on Vercel dashboard: {str(e)})"
 
     return {
         "status": "online",
         "agent": "AgenticAlpha Pipeline Powered by Alpaca MCP",
         "server_environment": config_status,
-        "note": "To execute live loops locally, run 'python main.py' with your own local .env file."
+        "note": "To execute live loops locally, run 'python main.py' with your own .env file."
     }
 
 @app.post("/run")
 def trigger_pipeline(target_asset: str = "SPY", background_tasks: BackgroundTasks = None):
-    """Triggers the trading agent pipeline via web request."""
     import asyncio
     if background_tasks:
         background_tasks.add_task(asyncio.run, run_agentic_alpha_pipeline(target_asset))
