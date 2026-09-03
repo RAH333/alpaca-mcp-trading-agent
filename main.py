@@ -1,80 +1,75 @@
 import os
 import sys
+import asyncio
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from dotenv import load_dotenv
 
-# Force accurate module directory tree discovery paths
+# Force clear module directory mapping discovery paths
 root_dir = os.path.dirname(os.path.abspath(__file__))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-# --- SEAMLESS FASTAPI INTEGRATION FOR VERCEL ---
+load_dotenv()
+
 app = FastAPI(title="AgenticAlpha Trading Pipeline API")
 
+class LocalTerminalCapturer:
+    """Interceptors collecting standard terminal print metrics cleanly into memory blocks."""
+    def __init__(self):
+        self.logs = []
+    def write(self, text):
+        if text.strip():
+            self.logs.append(text)
+    def flush(self):
+        pass
+
 @app.get("/")
-def read_root():
+def home_gateway():
     return {
         "status": "online",
         "agent": "AgenticAlpha Pipeline Powered by Alpaca MCP",
-        "server_environment": "Production Layer Verified",
-        "note": "To view live trading output loops, run 'python main.py' in your local terminal."
+        "endpoints": {
+            "view_logs_in_browser": "/run?ticker=AAPL"
+        }
     }
 
-@app.post("/run")
-def trigger_pipeline(target_asset: str = "SPY"):
-    return {
-        "status": "Pipeline initialized asynchronously", 
-        "target_asset": target_asset
-    }
-# ------------------------------------------------
-
-async def run_agentic_alpha_pipeline(target_asset: str):
+@app.get("/run", response_class=HTMLResponse)
+async def run_pipeline_and_get_logs(ticker: str = "AAPL"):
     """
-    Executes the complete autonomous trading loop for AgenticAlpha,
-    generating terminal logs that perfectly match the video presentation script.
+    Executes the trading system module, captures the exact local simulator logs 
+    you see in Cloud Shell, and prints them clearly in the browser.
     """
-    from dotenv import load_dotenv
-    load_dotenv()
-    
-    from config.settings import TradingConfig
-    from src.agents.research_agent import OptionsSpreadResearcher
-    from src.agents.execution_agent import OptionsExecutionAgent
+    capturer = LocalTerminalCapturer()
+    original_stdout = sys.stdout
+    sys.stdout = capturer  # Temporarily point terminal text to the web tracker
 
-    print("\n" + "="*70)
-    print(" AGENTICALPHA PIPELINE INITIALIZED | POWERED BY ALPACA MCP SERVER")
-    print("="*70 + "\n")
-    
-    print("[System] Validating environmental configurations and security keys...")
     try:
-        TradingConfig.validate()
-        print(f"[System Status] Environment Verified.")
-    except Exception as e:
-        print(f"[Boot Error] Initialization aborted: {str(e)}")
-        return
-
-    researcher = OptionsSpreadResearcher()
-    executor = OptionsExecutionAgent(max_allowed_risk=TradingConfig.MAX_RISK)
-
-    print(f"\n[Research Agent] Fetching {target_asset} option chains and market depth via Alpaca MCP...")
-    proposed_trade = await researcher.analyze_options_chain(target_asset)
-    
-    print(f"\n[Research Agent] Analysis Complete for {target_asset}:")
-    print(f"   -> Detected Implied Volatility Strategy: {proposed_trade['strategy']}")
-
-    print(f"\n[Risk Guardrail] Intercepting proposed execution payload before Alpaca API dispatch...")
-    is_approved = await executor.run_risk_guardrail(proposed_trade)
-    
-    if not is_approved:
-        return
+        # Import your runtime module engine dynamically to prevent startup loading crashes
+        from src.server import AutonomousTradingRuntime
+        runtime = AutonomousTradingRuntime()
         
-    print(f"\n[Execution Agent] Dispatching approved multi-leg order vector to Alpaca Trading endpoints...")
-    execution_results = await executor.execute_multi_leg_spread(proposed_trade)
-    
-    print("\n" + "="*70)
-    print("[SYSTEM LOOP RUN COMPLETION]")
-    print(f"    Final Order Status: {execution_results['status']}")
-    print("="*70 + "\n")
+        # Execute your exact heartbeat tracking logic sequence
+        await runtime.system_heartbeat_loop(ticker.upper())
+    except Exception as e:
+        print(f"[Runtime Exception Intercepted]: {str(e)}")
+    finally:
+        sys.stdout = original_stdout  # Restore standard output immediately
 
-if __name__ == "__main__":
-    import asyncio
-    # Running locally or on cloud servers remains 100% operational
-    asyncio.run(run_agentic_alpha_pipeline("SPY"))
+    # Format the collected terminal arrays cleanly for the web interface view
+    formatted_logs = "".join([f"<p style='margin:4px 0; font-family:monospace;'>{line}</p>" for line in capturer.logs])
+    
+    return f"""
+    <html>
+        <head><title>AgenticAlpha Execution Terminal Logs</title></head>
+        <body style="background-color:#121212; color:#00FF00; padding:20px; font-family:monospace;">
+            <h2 style="color:#FFFFFF; border-bottom:1px solid #333; padding-bottom:10px;">
+                ☁️ Cloud Runtime Interface Output Target: {ticker.upper()}
+            </h2>
+            <div style="background-color:#000000; padding:15px; border-radius:5px; border:1px solid #333;">
+                {formatted_logs if formatted_logs else "<p style='color:#FF0000;'>No logs generated. Check script execution scopes.</p>"}
+            </div>
+        </body>
+    </html>
+    """
+    
