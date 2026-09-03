@@ -1,15 +1,19 @@
-import asyncio
 import os
 import sys
+
+# CRUCIAL FOR VERCEL: Force the runtime to look in the root folder for submodules
+root_dir = os.path.dirname(os.path.abspath(__file__))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+import asyncio
 from dotenv import load_dotenv
 from fastapi import FastAPI, BackgroundTasks
-
-# Ensure the runtime environment can discover local project directory paths
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Load environmental context variables explicitly
 load_dotenv()
 
+# Standard imports will now resolve properly on Vercel's serverless environment
 from config.settings import TradingConfig
 from src.agents.research_agent import OptionsSpreadResearcher
 from src.agents.execution_agent import OptionsExecutionAgent
@@ -104,4 +108,4 @@ async def run_agentic_alpha_pipeline(target_asset: str):
 
 if __name__ == "__main__":
     # Testing over SPY as outlined in your step-by-step video script
-    asyncio.run(run_agentic_alpha_pipeline("SPY"))
+    asyncio.run(run_agentic_alpha_pipeline("SPY"))    
