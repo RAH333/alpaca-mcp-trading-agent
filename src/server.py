@@ -5,7 +5,7 @@ from src.agents.execution_agent import OptionsExecutionAgent
 from src.utils.helpers import logger
 
 # Import the app to keep routing pathways explicitly clear if Vercel targets this submodule directory
-from main import app
+# from main import app
 
 class AutonomousTradingRuntime:
     """System entry engine validating credentials and processing order flow."""
