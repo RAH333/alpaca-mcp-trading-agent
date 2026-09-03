@@ -14,30 +14,37 @@ from config.settings import TradingConfig
 from src.agents.research_agent import OptionsSpreadResearcher
 from src.agents.execution_agent import OptionsExecutionAgent
 
-# --- VERCEL REQUIRED CODE ENTRY ---
-# Instantiating FastAPI 'app' at the top level eliminates Vercel deployment logs errors.
+# --- VERCEL CONFIGURATION ENTRY ---
 app = FastAPI(title="AgenticAlpha Trading Pipeline API")
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "agent": "AgenticAlpha Pipeline Powered by Alpaca MCP"}
+    """Safe landing page that prevents Vercel from crashing if keys are missing."""
+    try:
+        TradingConfig.validate()
+        config_status = "Keys Verified & Loaded Successfully."
+    except Exception as e:
+        config_status = f"Local Mode / Public View (Keys not configured on Vercel: {str(e)})"
+
+    return {
+        "status": "online",
+        "agent": "AgenticAlpha Pipeline Powered by Alpaca MCP",
+        "server_environment": config_status,
+        "note": "To execute live loops locally, run 'python main.py' with your own .env file."
+    }
 
 @app.post("/run")
 def trigger_pipeline(target_asset: str = "SPY", background_tasks: BackgroundTasks = None):
-    """
-    Triggers the trading pipeline asynchronously over Vercel or cloud web requests
-    without blocking the server gateway connection.
-    """
+    """Triggers the trading pipeline via web request."""
     if background_tasks:
         background_tasks.add_task(run_agentic_alpha_pipeline_sync, target_asset)
         return {"status": "Execution scheduled in background", "target_asset": target_asset}
     else:
-        # Fallback local invocation block
         asyncio.run(run_agentic_alpha_pipeline(target_asset))
         return {"status": "Execution finished synchronously", "target_asset": target_asset}
 
 def run_agentic_alpha_pipeline_sync(target_asset: str):
-    """Synchronous helper wrapper required for running async code inside FastAPI background threads."""
+    """Synchronous helper wrapper required for running async code inside FastAPI."""
     asyncio.run(run_agentic_alpha_pipeline(target_asset))
 # ----------------------------------
 
@@ -50,7 +57,7 @@ async def run_agentic_alpha_pipeline(target_asset: str):
     print(" AGENTICALPHA PIPELINE INITIALIZED | POWERED BY ALPACA MCP SERVER")
     print("="*70 + "\n")
     
-    # 1. Environment & Credential Validation
+    # Environment & Credential Validation
     print("[System] Validating environmental configurations and security keys...")
     try:
         TradingConfig.validate()
@@ -61,22 +68,21 @@ async def run_agentic_alpha_pipeline(target_asset: str):
         print(f"[Boot Error] Initialization aborted: {str(e)}")
         return
 
-    # 2. Instantiate Connected Agents
+    # Instantiate Connected Agents
     researcher = OptionsSpreadResearcher()
     executor = OptionsExecutionAgent(max_allowed_risk=TradingConfig.MAX_RISK)
 
-    # 3. [Video Script 3:00 - 3:30] Initiating the Run & Research Phase
+    # Initiating the Run & Research Phase
     print(f"\n[Research Agent] Fetching {target_asset} option chains and market depth via Alpaca MCP...")
-    # Calls the multi-LLM telemetry simulation engine
     proposed_trade = await researcher.analyze_options_chain(target_asset)
     
-    # 4. [Video Script 3:30 - 4:00] IV Analysis & Strategy Assembly
+    # IV Analysis & Strategy Assembly
     print(f"\n[Research Agent] Analysis Complete for {target_asset}:")
     print(f"   -> Detected Implied Volatility Strategy: {proposed_trade['strategy']}")
     print(f"   -> Structural Calculations: Net Premium Impact -> ${proposed_trade.get('net_credit', proposed_trade.get('net_debit'))}")
     print(f"   -> Formulating Multi-Leg JSON payload configuration...")
 
-    # 5. [Video Script 4:00 - 4:30] Guardrail Interception & Verification
+    # Guardrail Interception & Verification
     print(f"\n[Risk Guardrail] Intercepting proposed execution payload before Alpaca API dispatch...")
     is_approved = await executor.run_risk_guardrail(proposed_trade)
     
@@ -85,7 +91,7 @@ async def run_agentic_alpha_pipeline(target_asset: str):
         print("="*70 + "\n")
         return
         
-    # 6. [Video Script 4:30 - 5:00] Alpaca Order Execution Execution
+    # Alpaca Order Execution
     print(f"\n[Execution Agent] Dispatching approved multi-leg order vector to Alpaca Trading endpoints...")
     execution_results = await executor.execute_multi_leg_spread(proposed_trade)
     
