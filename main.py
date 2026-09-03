@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 from dotenv import load_dotenv
+from fastapi import FastAPI, BackgroundTasks
 
 # Ensure the runtime environment can discover local project directory paths
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -12,6 +13,33 @@ load_dotenv()
 from config.settings import TradingConfig
 from src.agents.research_agent import OptionsSpreadResearcher
 from src.agents.execution_agent import OptionsExecutionAgent
+
+# --- VERCEL REQUIRED CODE ENTRY ---
+# Instantiating FastAPI 'app' at the top level eliminates Vercel deployment logs errors.
+app = FastAPI(title="AgenticAlpha Trading Pipeline API")
+
+@app.get("/")
+def read_root():
+    return {"status": "online", "agent": "AgenticAlpha Pipeline Powered by Alpaca MCP"}
+
+@app.post("/run")
+def trigger_pipeline(target_asset: str = "SPY", background_tasks: BackgroundTasks = None):
+    """
+    Triggers the trading pipeline asynchronously over Vercel or cloud web requests
+    without blocking the server gateway connection.
+    """
+    if background_tasks:
+        background_tasks.add_task(run_agentic_alpha_pipeline_sync, target_asset)
+        return {"status": "Execution scheduled in background", "target_asset": target_asset}
+    else:
+        # Fallback local invocation block
+        asyncio.run(run_agentic_alpha_pipeline(target_asset))
+        return {"status": "Execution finished synchronously", "target_asset": target_asset}
+
+def run_agentic_alpha_pipeline_sync(target_asset: str):
+    """Synchronous helper wrapper required for running async code inside FastAPI background threads."""
+    asyncio.run(run_agentic_alpha_pipeline(target_asset))
+# ----------------------------------
 
 async def run_agentic_alpha_pipeline(target_asset: str):
     """
