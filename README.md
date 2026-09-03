@@ -152,6 +152,7 @@ LLM_MODEL_NAME=gemini-3.5-flash
 To test the end-to-end multi-agent pipeline exactly as showcased in our presentation walkthrough, trigger the local master entry-point script:
 ```bash
 cd alpaca-mcp-trading-agent
+ls
 python main.py
 ```
 
